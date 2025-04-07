@@ -1,112 +1,107 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
   <title>던파 캐릭터 검색</title>
   <style>
     body {
-      font-family: Arial;
+      font-family: 'Arial';
       padding: 20px;
-    }
-    #result div {
-      padding: 10px;
-      border: 1px solid #ccc;
-      margin-top: 5px;
-      cursor: pointer;
+      background: #f5f5f5;
     }
     h1 {
-      color: #3c3c3c;
+      text-align: center;
+    }
+    .search-box {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+      gap: 10px;
+    }
+    #result {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+    .card {
+      width: 200px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      padding: 15px;
+      text-align: center;
+    }
+    .card img {
+      width: 100px;
+      height: 120px;
+    }
+    .job {
+      font-size: 13px;
+      color: gray;
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
   <h1>던전앤파이터 캐릭터 검색</h1>
-
-  <label>서버 선택:</label>
-  <select id="server">
-    <option value="cain">카인</option>
-    <option value="diregie">디레지에</option>
-    <option value="siroco">시로코</option>
-    <option value="prey">프레이</option>
-    <option value="casillas">카시야스</option>
-  </select>
-
-  <br /><br />
-
-  <label>캐릭터명:</label>
-  <input type="text" id="characterName" placeholder="캐릭터 이름 입력" />
-  <button onclick="searchCharacters()">검색</button>
+  <div class="search-box">
+    <select id="server">
+      <option value="cain">카인</option>
+      <option value="prey">프레이</option>
+      <option value="diregie">디레지에</option>
+    </select>
+    <input type="text" id="characterName" placeholder="캐릭터 이름 입력" />
+    <button onclick="searchCharacters()">검색</button>
+  </div>
 
   <div id="result"></div>
 
   <script>
-    const apiKey = 'nsYk6GNMxyk3pabxQFkFxQWYXM508xm6'; // ← 네 키 이미 적용됨!
+    const apiKey = 'nsYk6GNMxyk3pabxQFkFxQWYXM508xm6';
 
     function searchCharacters() {
       const server = document.getElementById('server').value;
-      const name = document.getElementById('characterName').value;
+      const name = document.getElementById('characterName').value.trim();
       const resultBox = document.getElementById('result');
+      resultBox.innerHTML = '<p>검색 중...</p>';
 
-const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-const targetUrl = `https://api.neople.co.kr/df/servers/${server}/characters?characterName=${name}&limit=50&apikey=${apiKey}`;
+      const proxy = 'https://cors-anywhere.herokuapp.com/';
+      const url = `https://api.neople.co.kr/df/servers/${server}/characters?characterName=${encodeURIComponent(name)}&limit=50&apikey=${apiKey}`;
 
-console.log("📡 호출 주소:", proxyUrl + targetUrl);
+      axios.get(proxy + url)
+        .then(res => {
+          const characters = res.data.rows;
+          resultBox.innerHTML = '';
 
-axios.get(proxyUrl + targetUrl)
-  .then(response => {
-    const characters = response.data.rows;
-    resultBox.innerHTML = '';
+          if (characters.length === 0) {
+            resultBox.innerHTML = '<p>검색 결과 없음 😢</p>';
+            return;
+          }
 
-    if (characters.length === 0) {
-      resultBox.innerHTML = '검색 결과 없음 😢';
-      return;
-    }
-    const keyword = decodeURIComponent(name).trim();
-  characters.forEach(char => {
-    const keyword = decodeURIComponent(name).trim();
-    if (!char.characterName.startsWith(keyword)) return;
-  
-    const div = document.createElement('div');
-    div.innerHTML = `
-      <img src="https://i.imgur.com/W7XnbRJ.png" width="40" style="vertical-align:middle; margin-right:10px;" />
-      <span>${char.characterName} (${char.jobName})</span>
-    `;
-    div.onclick = () => loadCharacterDetail(server, char.characterId);
-    resultBox.appendChild(div);
-  });
-  })
-  .catch(error => {
-    console.error('🔴 API 호출 에러:', error);
-    resultBox.innerHTML = `
-      <p style="color:red;">API 호출 실패!</p>
-      <p><strong>에러 메시지:</strong> ${error.message}</p>
-      <p><strong>응답 상태:</strong> ${error.response ? error.response.status : '없음'}</p>
-    `;
-  });
+          characters.forEach(char => {
+            if (!char.characterName.startsWith(name)) return;
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+              <img src="https://img-api.neople.co.kr/df/servers/${server}/characters/${char.characterId}?zoom=1" onerror="this.src='https://i.imgur.com/W7XnbRJ.png'" />
+              <h3>${char.characterName}</h3>
+              <div class="job">${char.jobGrowName}</div>
+            `;
+            card.onclick = () => loadDetail(server, char.characterId);
+            resultBox.appendChild(card);
+          });
+        })
+        .catch(err => {
+          console.error(err);
+          resultBox.innerHTML = `<p style="color:red">API 호출 실패 😢</p><p>${err.message}</p>`;
+        });
     }
 
-function loadCharacterDetail(server, characterId) {
-  const resultBox = document.getElementById('result');
-  const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
-  const detailUrl = `https://api.neople.co.kr/df/servers/${server}/characters/${characterId}?apikey=${apiKey}`;
-
-  axios.get(proxyUrl + detailUrl)
-    .then(response => {
-      const char = response.data;
-      resultBox.innerHTML = `
-        <h2>${char.characterName} - ${char.jobGrowName}</h2>
-        <p>레벨: ${char.level}</p>
-        <p>길드: ${char.guildName || '없음'}</p>
-        <p>전투력(명성): ${char.fame}</p>
-        <p>생성일: ${char.dateCreate}</p>
-        <!-- 필요한 정보는 이 아래에 계속 추가 가능 -->
-      `;
-    })
-    .catch(error => {
-      resultBox.innerHTML = `<p style="color:red;">상세 정보 불러오기 실패!</p>`;
-      console.error("상세 API 에러:", error);
-    });
+    function loadDetail(server, characterId) {
+      alert('캐릭터 상세 정보 보기 기능은 다음 단계에서 구현할게요!');
+      // 이후 상세 정보 API 연동 가능
     }
   </script>
 </body>
