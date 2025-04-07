@@ -3,199 +3,145 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>던파 모험단 검색기 (코앤 완전판)</title>
+  <title>던파 모험단 검색기 (클릭 반응 버전)</title>
   <style>
-    :root {
-      --bg-color: #1e1e2e;
-      --card-color: #2a2a3a;
-      --text-color: #ffffff;
-      --accent-color: #bb86fc;
-    }
     body {
       font-family: 'Arial', sans-serif;
-      background: var(--bg-color);
-      color: var(--text-color);
+      background: #1a1a2e;
+      color: white;
       padding: 20px;
-      transition: all 0.3s;
+      text-align: center;
     }
     h1 {
-      color: var(--accent-color);
-      text-align: center;
+      color: #bb86fc;
       margin-bottom: 30px;
     }
     .control-panel {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
+      margin: 30px 0;
     }
     button {
-      background: var(--accent-color);
-      color: #000;
-      border: none;
       padding: 12px 24px;
+      background: #bb86fc;
+      color: black;
+      border: none;
       border-radius: 8px;
       cursor: pointer;
       font-weight: bold;
-      transition: 0.2s;
+      margin: 0 10px;
+      transition: 0.3s;
     }
     button:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
     }
     .character-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
       gap: 20px;
       margin-top: 30px;
     }
     .character-card {
-      background: var(--card-color);
+      background: #2a2a3a;
       border-radius: 10px;
       padding: 20px;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.2);
       transition: 0.3s;
     }
     .character-card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+      box-shadow: 0 8px 15px rgba(0,0,0,0.3);
     }
     .character-card img {
       width: 100%;
       border-radius: 5px;
+      border: 2px solid #bb86fc;
       margin-bottom: 15px;
-      border: 2px solid var(--accent-color);
-    }
-    .character-info h3 {
-      color: var(--accent-color);
-      margin: 0 0 5px 0;
-    }
-    .loading {
-      text-align: center;
-      font-size: 18px;
-      margin: 40px 0;
-      color: var(--accent-color);
     }
     .error {
       color: #ff6b6b;
-      text-align: center;
-      padding: 15px;
       background: rgba(255,0,0,0.1);
+      padding: 15px;
       border-radius: 8px;
-    }
-    .fame {
-      color: #ffd700;
-      font-weight: bold;
-    }
-    .dark-mode {
-      --bg-color: #121212;
-      --card-color: #1e1e1e;
-      --text-color: #e0e0e0;
-    }
-    @media (max-width: 600px) {
-      .character-grid {
-        grid-template-columns: 1fr;
-      }
+      margin: 20px auto;
+      max-width: 500px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>✨ 프레이 서버 모험단 검색기 ✨</h1>
-    
-    <div class="control-panel">
-      <button onclick="search('Honkai', 'prey')">Honkai 모험단</button>
-      <button onclick="search('스너글리', 'prey')">스너글리 모험단</button>
-      <button onclick="toggleDarkMode()">🌙 다크 모드</button>
-    </div>
-
-    <div id="loading" class="loading" style="display:none;">
-      <p>🌀 모험단 정보를 불러오는 중...</p>
-      <p>잠시만 기다려주세요!</p>
-    </div>
-
-    <div id="result" class="character-grid"></div>
+  <h1>✨ 프레이 서버 모험단 검색기 ✨</h1>
+  
+  <div class="control-panel">
+    <button onclick="searchAdventure('Honkai')">Honkai 모험단</button>
+    <button onclick="searchAdventure('스너글리')">스너글리 모험단</button>
   </div>
+
+  <div id="result" class="character-grid"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script>
+    // ✅ 필수 설정
     const SERVER = "prey";
-    const PROXY_URL = "https://api.allorigins.win/raw?url=";
-    const API_BASE = "https://api.neople.co.kr/df/servers/";
-    const API_KEY = "nsYk6GNMxyk3pabxQFkFxQWYXM508xm6";
+    const API_KEY = "nsYk6GNMxyk3pabxQFkFxQWYXM508xm6"; // 🔒 실제 사용 시 백엔드로 이동!
 
-    async function search(adventureName, server) {
-      const loading = document.getElementById('loading');
-      const result = document.getElementById('result');
-      
-      loading.style.display = "block";
-      result.innerHTML = "";
+    // ✅ 모험단 검색 함수
+    async function searchAdventure(adventureName) {
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = "<p>🔍 모험단 검색 중...</p>";
 
       try {
-        const encodedName = encodeURIComponent(adventureName);
-        const url = `${PROXY_URL}${encodeURIComponent(`${API_BASE}${server}/adventurers/${encodedName}/characters?apikey=${API_KEY}`)}`;
-        const response = await axios.get(url);
+        // 1. API 호출
+        const response = await axios.get(
+          `https://api.neople.co.kr/df/servers/${SERVER}/adventurers/${encodeURIComponent(adventureName)}/characters?apikey=${API_KEY}`,
+          { timeout: 10000 } // 10초 타임아웃
+        );
 
-        let characters = response.data.rows || [];
-
-        characters.sort((a, b) => (b.fame || 0) - (a.fame || 0));
-
-        if (characters.length === 0) {
-          result.innerHTML = '<div class="error">😢 캐릭터가 없습니다. 모험단 이름을 확인해주세요!</div>';
+        // 2. 결과 확인
+        if (!response.data.rows || response.data.rows.length === 0) {
+          showError(`"${adventureName}" 모험단을 찾을 수 없습니다.`, adventureName);
           return;
         }
 
-        for (const char of characters) {
-          const charDetail = await getCharacterDetail(char.characterId);
-          result.innerHTML += createCharacterCard(char, charDetail);
-        }
+        // 3. 캐릭터 카드 생성
+        showCharacters(response.data.rows, adventureName);
 
       } catch (error) {
-        console.error("에러 발생:", error);
-        result.innerHTML = `
-          <div class="error">
-            <p>🚨 오류 발생!</p>
-            <p>${error.response?.status === 404 ? '모험단을 찾을 수 없습니다' : error.message}</p>
-            <button onclick="location.reload()">새로고침</button>
-          </div>
-        `;
-      } finally {
-        loading.style.display = "none";
+        console.error("API 호출 실패:", error);
+        showError(
+          error.response?.status === 404 
+            ? "모험단이 존재하지 않거나 서버를 확인하세요." 
+            : "API 서버 연결에 실패했습니다.",
+          adventureName
+        );
       }
     }
 
-    async function getCharacterDetail(characterId) {
-      try {
-        const url = `${PROXY_URL}${encodeURIComponent(`${API_BASE}${SERVER}/characters/${characterId}?apikey=${API_KEY}`)}`;
-        const res = await axios.get(url);
-        return res.data;
-      } catch {
-        return { level: "?", fame: "?" };
-      }
-    }
-
-    function createCharacterCard(char, detail) {
-      return `
-        <div class="character-card">
-          <img src="https://img-api.neople.co.kr/df/servers/${SERVER}/characters/${char.characterId}?zoom=2"
-               onerror="this.src='https://i.imgur.com/W7XnbRJ.png'">
-          <div class="character-info">
+    // ✅ 캐릭터 카드 표시
+    function showCharacters(characters, adventureName) {
+      let html = "";
+      characters.forEach(char => {
+        html += `
+          <div class="character-card">
+            <img src="https://img-api.neople.co.kr/df/servers/${SERVER}/characters/${char.characterId}?zoom=2"
+                 onerror="this.src='https://i.imgur.com/W7XnbRJ.png'">
             <h3>${char.characterName}</h3>
             <p>${char.jobGrowName}</p>
-            <p>레벨: ${detail.level || "?"}</p>
-            <p class="fame">명성: ${char.fame || "정보 없음"}</p>
+            <p>명성: ${char.fame || "정보 없음"}</p>
           </div>
-        </div>
-      `;
+        `;
+      });
+      document.getElementById('result').innerHTML = html;
     }
 
-    function toggleDarkMode() {
-      document.body.classList.toggle('dark-mode');
-      const btn = document.querySelector("button[onclick='toggleDarkMode()']");
-      btn.textContent = document.body.classList.contains('dark-mode') 
-        ? '☀️ 라이트 모드' 
-        : '🌙 다크 모드';
+    // ✅ 에러 표시
+    function showError(message, adventureName) {
+      document.getElementById('result').innerHTML = `
+        <div class="error">
+          <p>🚨 ${message}</p>
+          <p>모험단명: "${adventureName}"</p>
+          <p>서버: ${SERVER}</p>
+          <button onclick="searchAdventure('${adventureName}')">다시 시도</button>
+        </div>
+      `;
     }
   </script>
 </body>
