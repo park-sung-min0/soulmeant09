@@ -31,6 +31,11 @@
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
       padding: 15px;
       text-align: center;
+      transition: 0.3s;
+    }
+    .card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
     .card img {
       width: 100px;
@@ -67,25 +72,29 @@
       resultBox.innerHTML = '<p>검색 중...</p>';
 
       const proxy = 'https://cors-anywhere.herokuapp.com/';
-      const url = `https://api.neople.co.kr/df/servers/${server}/characters?characterName=${encodeURIComponent(name)}&limit=50&apikey=${apiKey}`;
+      const url = `https://api.neople.co.kr/df/servers/${server}/characters?characterName=${encodeURIComponent(name)}&limit=100&apikey=${apiKey}`;
 
       axios.get(proxy + url)
         .then(res => {
+          const keyword = decodeURIComponent(name).trim();
           const characters = res.data.rows;
           resultBox.innerHTML = '';
 
-          if (characters.length === 0) {
+          const filtered = characters.filter(char =>
+            char.characterName.startsWith(keyword)
+          );
+
+          if (filtered.length === 0) {
             resultBox.innerHTML = '<p>검색 결과 없음 😢</p>';
             return;
           }
 
-          characters.forEach(char => {
-            if (!char.characterName.startsWith(name)) return;
-
+          filtered.forEach(char => {
             const card = document.createElement('div');
             card.className = 'card';
             card.innerHTML = `
-              <img src="https://img-api.neople.co.kr/df/servers/${server}/characters/${char.characterId}?zoom=1" onerror="this.src='https://i.imgur.com/W7XnbRJ.png'" />
+              <img src="https://img-api.neople.co.kr/df/servers/${server}/characters/${char.characterId}?zoom=1" 
+                   onerror="this.src='https://i.imgur.com/W7XnbRJ.png'" />
               <h3>${char.characterName}</h3>
               <div class="job">${char.jobGrowName}</div>
             `;
@@ -100,8 +109,7 @@
     }
 
     function loadDetail(server, characterId) {
-      alert('캐릭터 상세 정보 보기 기능은 다음 단계에서 구현할게요!');
-      // 이후 상세 정보 API 연동 가능
+      alert('🔍 캐릭터 상세 정보 기능은 다음 단계에서 추가할게요!');
     }
   </script>
 </body>
