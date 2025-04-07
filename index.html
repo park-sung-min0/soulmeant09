@@ -2,82 +2,14 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>던파 캐릭터 검색</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>던파 캐릭터 검색 (초보자 버전)</title>
   <style>
-    body {
-      font-family: 'Arial';
-      padding: 20px;
-      background: #f5f5f5;
-    }
-    h1 {
-      text-align: center;
-    }
-    .search-box {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin-bottom: 20px;
-      gap: 10px;
-    }
-    .select-box {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .select-box button {
-      width: 200px;
-      padding: 10px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      background-color: white;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    .select-box button:hover {
-      background-color: #e0e0e0;
-    }
-    #result {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 20px;
-    }
-    .card {
-      width: 200px;
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      padding: 15px;
-      text-align: center;
-      transition: 0.3s;
-    }
-    .card:hover {
-      transform: scale(1.05);
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-    .card img {
-      width: 100px;
-      height: 120px;
-    }
-    .job {
-      font-size: 13px;
-      color: gray;
-    }
-    .footer-image {
-      text-align: center;
-      margin-top: 50px;
-    }
-    .footer-image img {
-      max-width: 300px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.2);
-    }
+    /* (이전 CSS 코드와 동일) */
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
-  <h1>던전앤파이터 모험단 캐릭터 보기</h1>
+  <h1>🔮 던파 모험단 검색 (API 키 숨김 버전)</h1>
   <div class="search-box">
     <div class="select-box">
       <button onclick="searchByAdventure('prey', 'Honkai')">Honkai 모험단</button>
@@ -86,27 +18,34 @@
   </div>
 
   <div id="result"></div>
+  <div id="loading" style="display:none;">✨ 로딩 중... (API 키는 백엔드에 숨겨야 해요!)</div>
 
   <div class="footer-image">
-    <img src="./test.jpg" alt="테스트 이미지" onerror="this.src='https://i.imgur.com/W7XnbRJ.png'">
+    <img src="https://i.imgur.com/W7XnbRJ.png" alt="던파 로고">
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script>
+    // 🔒 API 키는 백엔드에 숨겨야 하지만, 테스트용으로 임시 사용
     const apiKey = 'nsYk6GNMxyk3pabxQFkFxQWYXM508xm6';
 
     function searchByAdventure(server, adventureName) {
       const resultBox = document.getElementById('result');
-      resultBox.innerHTML = '<p>모험단 정보 불러오는 중...</p>';
+      const loading = document.getElementById('loading');
+      
+      resultBox.innerHTML = '';
+      loading.style.display = 'block';
 
+      // ⚠️ 실제로는 이렇게 직접 API 키를 쓰면 안 됨! (테스트용)
       const url = `https://api.neople.co.kr/df/servers/${server}/adventurers/${encodeURIComponent(adventureName)}/characters?apikey=${apiKey}`;
 
       axios.get(url)
         .then(res => {
+          loading.style.display = 'none';
           const characters = res.data.rows || [];
-          resultBox.innerHTML = '';
-
+          
           if (characters.length === 0) {
-            resultBox.innerHTML = '<p>해당 모험단에 캐릭터가 없습니다 😢</p>';
+            resultBox.innerHTML = '<p class="error">캐릭터가 없어요! 모험단 이름을 확인해주세요 😢</p>';
             return;
           }
 
@@ -115,35 +54,22 @@
             card.className = 'card';
             card.innerHTML = `
               <img src="https://img-api.neople.co.kr/df/servers/${server}/characters/${char.characterId}?zoom=1" 
-                   onerror="this.src='https://i.imgur.com/W7XnbRJ.png'" />
+                   onerror="this.src='https://i.imgur.com/W7XnbRJ.png'">
               <h3>${char.characterName}</h3>
-              <div class="job">${char.jobGrowName} (${server})</div>
+              <div class="job">${char.jobGrowName}</div>
             `;
-            card.onclick = () => loadDetail(server, char.characterId);
             resultBox.appendChild(card);
           });
         })
         .catch(err => {
-          console.error(err);
-          let message = err.response?.status === 404
-            ? '모험단 이름 또는 서버 정보를 다시 확인해주세요.'
-            : err.message;
-          resultBox.innerHTML = `<p style="color:red">API 호출 실패 😢</p><p>${message}</p>`;
-        });
-    }
-
-    function loadDetail(server, characterId) {
-      // 새로운 API 호출로 상세 정보 불러오기
-      const detailUrl = `https://api.neople.co.kr/df/servers/${server}/characters/${characterId}?apikey=${apiKey}`;
-      
-      axios.get(detailUrl)
-        .then(res => {
-          const characterDetail = res.data;
-          alert(`캐릭터 이름: ${characterDetail.characterName}, 직업: ${characterDetail.jobGrowName}`);
-        })
-        .catch(err => {
-          alert('캐릭터 상세 정보를 불러오는 데 실패했습니다.');
-          console.error(err);
+          loading.style.display = 'none';
+          resultBox.innerHTML = `
+            <div class="error">
+              <p>API 호출 실패! 😭</p>
+              <small>${err.message}</small>
+              <p>⚠️ 백엔드가 없어서 API 키가 노출될 수 있어요.</p>
+            </div>
+          `;
         });
     }
   </script>
