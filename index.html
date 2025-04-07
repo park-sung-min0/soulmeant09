@@ -88,7 +88,7 @@
   <div id="result"></div>
 
   <div class="footer-image">
-    <img src="./test.JPG" alt="테스트 이미지">
+    <img src="./test.jpg" alt="테스트 이미지">
   </div>
 
   <script>
@@ -99,10 +99,20 @@
       resultBox.innerHTML = '<p>모험단 정보 불러오는 중...</p>';
 
       const server = 'cain';
-      const url = `https://api.neople.co.kr/df/servers/${server}/adventurers/${encodeURIComponent(adventureName)}/characters?apikey=${apiKey}`;
+      const url = `https://api.neople.co.kr/df/servers/${server}/adventurers?characterName=${encodeURIComponent(adventureName)}&apikey=${apiKey}`;
 
       axios.get(url)
         .then(res => {
+          const adventureName = res.data.rows?.[0]?.adventureName;
+          if (!adventureName) {
+            resultBox.innerHTML = '<p>모험단을 찾을 수 없습니다 😢</p>';
+            return;
+          }
+
+          return axios.get(`https://api.neople.co.kr/df/servers/${server}/adventurers/${adventureName}/characters?apikey=${apiKey}`);
+        })
+        .then(res => {
+          if (!res) return;
           const characters = res.data.rows || [];
           resultBox.innerHTML = '';
 
