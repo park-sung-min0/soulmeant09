@@ -61,39 +61,60 @@
     const apiKey = 'nsYk6GNMxyk3pabxQFkFxQWYXM508xm6';
 
     function searchCharacters() {
-      const name = document.getElementById('characterName').value.trim();
+      const inputName = document.getElementById('characterName').value.trim();
       const resultBox = document.getElementById('result');
       resultBox.innerHTML = '<p>검색 중...</p>';
 
       const proxy = 'https://cors-anywhere.herokuapp.com/';
       const servers = ['cain', 'prey', 'diregie'];
-      const keyword = decodeURIComponent(name);
+
+      // 🔽 검색어 기반 유사 이름 리스트 생성
+      const nameVariants = [
+        inputName,
+        inputName + '루비',
+        inputName + '아이',
+        inputName + '맘',
+        inputName + '제드',
+        inputName + '오월',
+        inputName + '★'
+      ];
+
       let allCharacters = [];
 
       Promise.all(
-        servers.map(server => {
-          const url = `https://api.neople.co.kr/df/servers/${server}/characters?characterName=${encodeURIComponent(name)}&limit=100&apikey=${apiKey}`;
-          return axios.get(proxy + url)
-            .then(res => {
-              const chars = res.data.rows || [];
-              chars.forEach(c => {
-                c.serverId = server;
-                if (c.characterName.includes(keyword)) {
+        servers.flatMap(server => {
+          return nameVariants.map(variant => {
+            const url = `https://api.neople.co.kr/df/servers/${server}/characters?characterName=${encodeURIComponent(variant)}&limit=20&apikey=${apiKey}`;
+            return axios.get(proxy + url)
+              .then(res => {
+                const chars = res.data.rows || [];
+                chars.forEach(c => {
+                  c.serverId = server;
                   allCharacters.push(c);
-                }
-              });
-            })
-            .catch(() => {});
+                });
+              })
+              .catch(() => {});
+          });
         })
       ).then(() => {
         resultBox.innerHTML = '';
 
-        if (allCharacters.length === 0) {
+        // 중복 제거 (characterId 기준)
+        const unique = [];
+        const seen = new Set();
+        for (const c of allCharacters) {
+          if (!seen.has(c.characterId)) {
+            seen.add(c.characterId);
+            unique.push(c);
+          }
+        }
+
+        if (unique.length === 0) {
           resultBox.innerHTML = '<p>검색 결과 없음 😢</p>';
           return;
         }
 
-        allCharacters.forEach(char => {
+        unique.forEach(char => {
           const card = document.createElement('div');
           card.className = 'card';
           card.innerHTML = `
@@ -114,3 +135,4 @@
   </script>
 </body>
 </html>
+
