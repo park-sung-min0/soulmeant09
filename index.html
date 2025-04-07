@@ -105,8 +105,8 @@
     <h1>✨ 프레이 서버 모험단 검색기 ✨</h1>
     
     <div class="control-panel">
-      <button onclick="search('Honkai')">Honkai 모험단</button>
-      <button onclick="search('스너글리')">스너글리 모험단</button>
+      <button onclick="search('Honkai', 'prey')">Honkai 모험단</button>
+      <button onclick="search('스너글리', 'prey')">스너글리 모험단</button>
       <button onclick="toggleDarkMode()">🌙 다크 모드</button>
     </div>
 
@@ -120,15 +120,12 @@
 
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script>
-    // 🌟 코앤의 마법 설정
     const SERVER = "prey";
     const PROXY_URL = "https://api.allorigins.win/raw?url=";
     const API_BASE = "https://api.neople.co.kr/df/servers/";
-
-    // 🔒 API 키 (실제 사용 시 백엔드로 이동해야 합니다!)
     const API_KEY = "nsYk6GNMxyk3pabxQFkFxQWYXM508xm6";
 
-    async function search(adventureName) {
+    async function search(adventureName, server) {
       const loading = document.getElementById('loading');
       const result = document.getElementById('result');
       
@@ -136,23 +133,19 @@
       result.innerHTML = "";
 
       try {
-        // 1. 모험단 캐릭터 목록 조회
         const encodedName = encodeURIComponent(adventureName);
-        const url = `${PROXY_URL}${encodeURIComponent(`${API_BASE}${SERVER}/adventurers/${encodedName}/characters?apikey=${API_KEY}`)}`;
-        
+        const url = `${PROXY_URL}${encodeURIComponent(`${API_BASE}${server}/adventurers/${encodedName}/characters?apikey=${API_KEY}`)}`;
         const response = await axios.get(url);
+
         let characters = response.data.rows || [];
 
-        // 2. 명성 순 정렬 (코앤이 추가한 특별 기능!)
         characters.sort((a, b) => (b.fame || 0) - (a.fame || 0));
 
-        // 3. 결과 표시
         if (characters.length === 0) {
           result.innerHTML = '<div class="error">😢 캐릭터가 없습니다. 모험단 이름을 확인해주세요!</div>';
           return;
         }
 
-        // 4. 각 캐릭터 카드 생성
         for (const char of characters) {
           const charDetail = await getCharacterDetail(char.characterId);
           result.innerHTML += createCharacterCard(char, charDetail);
@@ -165,45 +158,3 @@
             <p>🚨 오류 발생!</p>
             <p>${error.response?.status === 404 ? '모험단을 찾을 수 없습니다' : error.message}</p>
             <button onclick="location.reload()">새로고침</button>
-          </div>
-        `;
-      } finally {
-        loading.style.display = "none";
-      }
-    }
-
-    async function getCharacterDetail(characterId) {
-      try {
-        const url = `${PROXY_URL}${encodeURIComponent(`${API_BASE}${SERVER}/characters/${characterId}?apikey=${API_KEY}`)}`;
-        const res = await axios.get(url);
-        return res.data;
-      } catch {
-        return { level: "?", fame: "?" };
-      }
-    }
-
-    function createCharacterCard(char, detail) {
-      return `
-        <div class="character-card">
-          <img src="https://img-api.neople.co.kr/df/servers/${SERVER}/characters/${char.characterId}?zoom=2"
-               onerror="this.src='https://i.imgur.com/W7XnbRJ.png'">
-          <div class="character-info">
-            <h3>${char.characterName}</h3>
-            <p>${char.jobGrowName}</p>
-            <p>레벨: ${detail.level || "?"}</p>
-            <p class="fame">명성: ${char.fame || "정보 없음"}</p>
-          </div>
-        </div>
-      `;
-    }
-
-    function toggleDarkMode() {
-      document.body.classList.toggle('dark-mode');
-      const btn = document.querySelector("button[onclick='toggleDarkMode()']");
-      btn.textContent = document.body.classList.contains('dark-mode') 
-        ? '☀️ 라이트 모드' 
-        : '🌙 다크 모드';
-    }
-  </script>
-</body>
-</html>
