@@ -48,6 +48,8 @@
       const name = document.getElementById('characterName').value;
       const resultBox = document.getElementById('result');
 
+      console.log("📡 호출 주소:", `https://api.neople.co.kr/df/servers/${server}/characters?characterName=${name}&limit=10&apikey=${apiKey}`);
+
       axios.get(`https://api.neople.co.kr/df/servers/${server}/characters?characterName=${name}&limit=10&apikey=${apiKey}`)
         .then(response => {
           const characters = response.data.rows;
@@ -68,10 +70,14 @@
         resultBox.appendChild(div);
       });
         })
-        .catch(error => {
-          console.error(error);
-          resultBox.innerHTML = 'API 호출 실패!';
-        });
+    .catch(error => {
+      console.error('🔴 API 호출 에러:', error);  // 👉 브라우저 콘솔에 전체 에러 출력
+      resultBox.innerHTML = `
+        <p style="color:red;">API 호출 실패!</p>
+        <p><strong>에러 메시지:</strong> ${error.message}</p>
+        <p><strong>응답 상태:</strong> ${error.response ? error.response.status : '없음'}</p>
+      `;
+    });
     }
 
     function loadCharacterDetail(server, characterId) {
