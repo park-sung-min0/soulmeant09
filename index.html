@@ -1,17 +1,89 @@
-<!doctype html>
-<html lang='ko'>
+<!DOCTYPE html>
+<html lang="ko">
 <head>
-  <meta charset="utf-8">
-  <title>My First Web Site</title>
+  <meta charset="UTF-8" />
+  <title>던파 캐릭터 검색</title>
   <style>
-    h2 { font-weight:bolder; color:red; }
+    body {
+      font-family: Arial;
+      padding: 20px;
+    }
+    #result div {
+      padding: 10px;
+      border: 1px solid #ccc;
+      margin-top: 5px;
+      cursor: pointer;
+    }
+    h1 {
+      color: #3c3c3c;
+    }
   </style>
-  <script>
-     alert('Hello World');
-  </script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
-  <h2>Hello World</h2>
-  <h3>처음 만드는 웹 페이지</h3>
+  <h1>던전앤파이터 캐릭터 검색</h1>
+
+  <label>서버 선택:</label>
+  <select id="server">
+    <option value="cain">카인</option>
+    <option value="diregie">디레지에</option>
+    <option value="siroco">시로코</option>
+    <option value="prey">프레이</option>
+    <option value="casillas">카시야스</option>
+  </select>
+
+  <br /><br />
+
+  <label>캐릭터명:</label>
+  <input type="text" id="characterName" placeholder="캐릭터 이름 입력" />
+  <button onclick="searchCharacters()">검색</button>
+
+  <div id="result"></div>
+
+  <script>
+    const apiKey = 'nsYk6GNMyk3pabxQkFkQWYXM508xm6'; // ← 네 키 이미 적용됨!
+
+    function searchCharacters() {
+      const server = document.getElementById('server').value;
+      const name = document.getElementById('characterName').value;
+      const resultBox = document.getElementById('result');
+
+      axios.get(`https://api.neople.co.kr/df/servers/${server}/characters?characterName=${name}&limit=10&apikey=${apiKey}`)
+        .then(response => {
+          const characters = response.data.rows;
+          resultBox.innerHTML = '';
+
+          if (characters.length === 0) {
+            resultBox.innerHTML = '검색 결과 없음 😢';
+            return;
+          }
+
+          characters.forEach(char => {
+            const div = document.createElement('div');
+            div.textContent = `${char.characterName} (${char.jobName})`;
+            div.onclick = () => loadCharacterDetail(server, char.characterId);
+            resultBox.appendChild(div);
+          });
+        })
+        .catch(error => {
+          console.error(error);
+          resultBox.innerHTML = 'API 호출 실패!';
+        });
+    }
+
+    function loadCharacterDetail(server, characterId) {
+      const resultBox = document.getElementById('result');
+      axios.get(`https://api.neople.co.kr/df/servers/${server}/characters/${characterId}?apikey=${apiKey}`)
+        .then(response => {
+          const char = response.data;
+          resultBox.innerHTML = `
+            <h2>${char.characterName} - ${char.jobGrowName}</h2>
+            <p>레벨: ${char.level}</p>
+            <p>길드: ${char.guildName || '없음'}</p>
+            <p>전투력(명성): ${char.fame}</p>
+          `;
+        });
+    }
+  </script>
 </body>
 </html>
