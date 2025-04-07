@@ -62,9 +62,9 @@ axios.get(proxyUrl + targetUrl)
       resultBox.innerHTML = '검색 결과 없음 😢';
       return;
     }
-
+    const keyword = decodeURIComponent(name).trim();
     characters.forEach(char => {
-      if (!char.characterName.startsWith(decodeURIComponent(name))) return;
+      if (!char.characterName.startsWith(keyword)) return;
 
       const div = document.createElement('div');
       div.textContent = `${char.characterName} (${char.jobName})`;
@@ -82,18 +82,27 @@ axios.get(proxyUrl + targetUrl)
   });
     }
 
-    function loadCharacterDetail(server, characterId) {
-      const resultBox = document.getElementById('result');
-      axios.get(`https://api.neople.co.kr/df/servers/${server}/characters/${characterId}?apikey=${apiKey}`)
-        .then(response => {
-          const char = response.data;
-          resultBox.innerHTML = `
-            <h2>${char.characterName} - ${char.jobGrowName}</h2>
-            <p>레벨: ${char.level}</p>
-            <p>길드: ${char.guildName || '없음'}</p>
-            <p>전투력(명성): ${char.fame}</p>
-          `;
-        });
+function loadCharacterDetail(server, characterId) {
+  const resultBox = document.getElementById('result');
+  const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+  const detailUrl = `https://api.neople.co.kr/df/servers/${server}/characters/${characterId}?apikey=${apiKey}`;
+
+  axios.get(proxyUrl + detailUrl)
+    .then(response => {
+      const char = response.data;
+      resultBox.innerHTML = `
+        <h2>${char.characterName} - ${char.jobGrowName}</h2>
+        <p>레벨: ${char.level}</p>
+        <p>길드: ${char.guildName || '없음'}</p>
+        <p>전투력(명성): ${char.fame}</p>
+        <p>생성일: ${char.dateCreate}</p>
+        <!-- 필요한 정보는 이 아래에 계속 추가 가능 -->
+      `;
+    })
+    .catch(error => {
+      resultBox.innerHTML = `<p style="color:red;">상세 정보 불러오기 실패!</p>`;
+      console.error("상세 API 에러:", error);
+    });
     }
   </script>
 </body>
