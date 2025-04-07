@@ -48,36 +48,38 @@
       const name = document.getElementById('characterName').value;
       const resultBox = document.getElementById('result');
 
-      console.log("📡 호출 주소:", `https://api.neople.co.kr/df/servers/${server}/characters?characterName=${name}&limit=10&apikey=${apiKey}`);
+const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+const targetUrl = `https://api.neople.co.kr/df/servers/${server}/characters?characterName=${name}&limit=10&apikey=${apiKey}`;
 
-      axios.get(`https://api.neople.co.kr/df/servers/${server}/characters?characterName=${name}&limit=10&apikey=${apiKey}`)
-        .then(response => {
-          const characters = response.data.rows;
-          resultBox.innerHTML = '';
+console.log("📡 호출 주소:", proxyUrl + targetUrl);
 
-          if (characters.length === 0) {
-            resultBox.innerHTML = '검색 결과 없음 😢';
-            return;
-          }
+axios.get(proxyUrl + targetUrl)
+  .then(response => {
+    const characters = response.data.rows;
+    resultBox.innerHTML = '';
 
-      characters.forEach(char => {
-        // 🔍 앞글자부터 입력한 이름과 정확히 일치하는 캐릭터만 보여줌
-        if (!char.characterName.startsWith(decodeURIComponent(name))) return;
-      
-        const div = document.createElement('div');
-        div.textContent = `${char.characterName} (${char.jobName})`;
-        div.onclick = () => loadCharacterDetail(server, char.characterId);
-        resultBox.appendChild(div);
-      });
-        })
-    .catch(error => {
-      console.error('🔴 API 호출 에러:', error);  // 👉 브라우저 콘솔에 전체 에러 출력
-      resultBox.innerHTML = `
-        <p style="color:red;">API 호출 실패!</p>
-        <p><strong>에러 메시지:</strong> ${error.message}</p>
-        <p><strong>응답 상태:</strong> ${error.response ? error.response.status : '없음'}</p>
-      `;
+    if (characters.length === 0) {
+      resultBox.innerHTML = '검색 결과 없음 😢';
+      return;
+    }
+
+    characters.forEach(char => {
+      if (!char.characterName.startsWith(decodeURIComponent(name))) return;
+
+      const div = document.createElement('div');
+      div.textContent = `${char.characterName} (${char.jobName})`;
+      div.onclick = () => loadCharacterDetail(server, char.characterId);
+      resultBox.appendChild(div);
     });
+  })
+  .catch(error => {
+    console.error('🔴 API 호출 에러:', error);
+    resultBox.innerHTML = `
+      <p style="color:red;">API 호출 실패!</p>
+      <p><strong>에러 메시지:</strong> ${error.message}</p>
+      <p><strong>응답 상태:</strong> ${error.response ? error.response.status : '없음'}</p>
+    `;
+  });
     }
 
     function loadCharacterDetail(server, characterId) {
