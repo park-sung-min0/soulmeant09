@@ -58,12 +58,15 @@
             return;
           }
 
-          characters.forEach(char => {
-            const div = document.createElement('div');
-            div.textContent = `${char.characterName} (${char.jobName})`;
-            div.onclick = () => loadCharacterDetail(server, char.characterId);
-            resultBox.appendChild(div);
-          });
+      characters.forEach(char => {
+        // 🔍 앞글자부터 입력한 이름과 정확히 일치하는 캐릭터만 보여줌
+        if (!char.characterName.startsWith(decodeURIComponent(name))) return;
+      
+        const div = document.createElement('div');
+        div.textContent = `${char.characterName} (${char.jobName})`;
+        div.onclick = () => loadCharacterDetail(server, char.characterId);
+        resultBox.appendChild(div);
+      });
         })
         .catch(error => {
           console.error(error);
