@@ -3,73 +3,35 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>던파 캐릭터 검색 (초보자 버전)</title>
+  <title>던파 검색 (로컬 테스트)</title>
   <style>
-    /* (이전 CSS 코드와 동일) */
+    body { font-family: Arial; padding: 20px; }
+    button { padding: 10px; margin: 5px; }
+    .error { color: red; }
+    img { max-width: 100%; }
   </style>
 </head>
 <body>
-  <h1>🔮 던파 모험단 검색 (API 키 숨김 버전)</h1>
-  <div class="search-box">
-    <div class="select-box">
-      <button onclick="searchByAdventure('prey', 'Honkai')">Honkai 모험단</button>
-      <button onclick="searchByAdventure('prey', '스너글리')">스너글리 모험단</button>
-    </div>
-  </div>
-
+  <h1>던파 모험단 검색</h1>
+  <button onclick="search('prey', 'Honkai')">Honkai 모험단</button>
+  <button onclick="search('prey', '스너글리')">스너글리 모험단</button>
   <div id="result"></div>
-  <div id="loading" style="display:none;">✨ 로딩 중... (API 키는 백엔드에 숨겨야 해요!)</div>
-
-  <div class="footer-image">
-    <img src="https://i.imgur.com/W7XnbRJ.png" alt="던파 로고">
-  </div>
+  <img src="https://via.placeholder.com/300x150?text=DNF+Logo" alt="로고">
 
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script>
-    // 🔒 API 키는 백엔드에 숨겨야 하지만, 테스트용으로 임시 사용
-    const apiKey = 'nsYk6GNMxyk3pabxQFkFxQWYXM508xm6';
+    function search(server, name) {
+      const apiKey = prompt("nsYk6GNMxyk3pabxQFkFxQWYXM508xm6");
+      if (!apiKey) return alert("API 키가 필요해요!");
 
-    function searchByAdventure(server, adventureName) {
-      const resultBox = document.getElementById('result');
-      const loading = document.getElementById('loading');
-      
-      resultBox.innerHTML = '';
-      loading.style.display = 'block';
-
-      // ⚠️ 실제로는 이렇게 직접 API 키를 쓰면 안 됨! (테스트용)
-      const url = `https://api.neople.co.kr/df/servers/${server}/adventurers/${encodeURIComponent(adventureName)}/characters?apikey=${apiKey}`;
-
-      axios.get(url)
+      axios.get(`https://api.neople.co.kr/df/servers/${server}/adventurers/${name}/characters?apikey=${apiKey}`)
         .then(res => {
-          loading.style.display = 'none';
-          const characters = res.data.rows || [];
-          
-          if (characters.length === 0) {
-            resultBox.innerHTML = '<p class="error">캐릭터가 없어요! 모험단 이름을 확인해주세요 😢</p>';
-            return;
-          }
-
-          characters.forEach(char => {
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.innerHTML = `
-              <img src="https://img-api.neople.co.kr/df/servers/${server}/characters/${char.characterId}?zoom=1" 
-                   onerror="this.src='https://i.imgur.com/W7XnbRJ.png'">
-              <h3>${char.characterName}</h3>
-              <div class="job">${char.jobGrowName}</div>
-            `;
-            resultBox.appendChild(card);
-          });
+          document.getElementById('result').innerHTML = 
+            `<pre>${JSON.stringify(res.data, null, 2)}</pre>`;
         })
         .catch(err => {
-          loading.style.display = 'none';
-          resultBox.innerHTML = `
-            <div class="error">
-              <p>API 호출 실패! 😭</p>
-              <small>${err.message}</small>
-              <p>⚠️ 백엔드가 없어서 API 키가 노출될 수 있어요.</p>
-            </div>
-          `;
+          document.getElementById('result').innerHTML = 
+            `<div class="error">⚠️ 에러 발생: ${err.message}</div>`;
         });
     }
   </script>
