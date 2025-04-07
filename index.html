@@ -80,8 +80,8 @@
   <h1>던전앤파이터 모험단 캐릭터 보기</h1>
   <div class="search-box">
     <div class="select-box">
-      <button onclick="searchByAdventure('Honkai')">Honkai 모험단</button>
-      <button onclick="searchByAdventure('스너글리')">스너글리 모험단</button>
+      <button onclick="searchByAdventure('prey', 'Honkai')">Honkai 모험단</button>
+      <button onclick="searchByAdventure('prey', '스너글리')">스너글리 모험단</button>
     </div>
   </div>
 
@@ -94,25 +94,14 @@
   <script>
     const apiKey = 'nsYk6GNMxyk3pabxQFkFxQWYXM508xm6';
 
-    function searchByAdventure(adventureName) {
+    function searchByAdventure(server, adventureName) {
       const resultBox = document.getElementById('result');
       resultBox.innerHTML = '<p>모험단 정보 불러오는 중...</p>';
 
-      const server = 'cain';
-      const url = `https://api.neople.co.kr/df/servers/${server}/adventurers?characterName=${encodeURIComponent(adventureName)}&apikey=${apiKey}`;
+      const url = `https://api.neople.co.kr/df/servers/${server}/adventurers/${encodeURIComponent(adventureName)}/characters?apikey=${apiKey}`;
 
       axios.get(url)
         .then(res => {
-          const adventureName = res.data.rows?.[0]?.adventureName;
-          if (!adventureName) {
-            resultBox.innerHTML = '<p>모험단을 찾을 수 없습니다 😢</p>';
-            return;
-          }
-
-          return axios.get(`https://api.neople.co.kr/df/servers/${server}/adventurers/${adventureName}/characters?apikey=${apiKey}`);
-        })
-        .then(res => {
-          if (!res) return;
           const characters = res.data.rows || [];
           resultBox.innerHTML = '';
 
