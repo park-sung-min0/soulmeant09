@@ -85,11 +85,10 @@
       const resultBox = document.getElementById('result');
       resultBox.innerHTML = '<p>모험단 정보 불러오는 중...</p>';
 
-      const proxy = 'https://cors-anywhere.herokuapp.com/';
-      const server = 'cain'; // 두 모험단이 존재하는 서버로 고정
+      const server = 'cain';
       const url = `https://api.neople.co.kr/df/servers/${server}/adventurers/${encodeURIComponent(adventureName)}/characters?apikey=${apiKey}`;
 
-      axios.get(proxy + url)
+      axios.get(url)
         .then(res => {
           const characters = res.data.rows || [];
           resultBox.innerHTML = '';
@@ -114,7 +113,10 @@
         })
         .catch(err => {
           console.error(err);
-          resultBox.innerHTML = `<p style="color:red">API 호출 실패 😢</p><p>${err.message}</p>`;
+          let message = err.response?.status === 404
+            ? '모험단 이름 또는 서버 정보를 다시 확인해주세요.'
+            : err.message;
+          resultBox.innerHTML = `<p style="color:red">API 호출 실패 😢</p><p>${message}</p>`;
         });
     }
 
