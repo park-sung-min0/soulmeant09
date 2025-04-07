@@ -72,7 +72,7 @@
       resultBox.innerHTML = '<p>검색 중...</p>';
 
       const proxy = 'https://cors-anywhere.herokuapp.com/';
-      const url = `https://api.neople.co.kr/df/servers/${server}/characters?characterName=${encodeURIComponent(name)}&limit=100&apikey=${apiKey}`;
+      const url = `https://api.neople.co.kr/df/servers/${server}/characters?characterName=${encodeURIComponent(name)}&limit=100&wordType=full&apikey=${apiKey}`;
 
       axios.get(proxy + url)
         .then(res => {
@@ -80,16 +80,12 @@
           const characters = res.data.rows;
           resultBox.innerHTML = '';
 
-          const filtered = characters.filter(char =>
-            char.characterName.startsWith(keyword)
-          );
-
-          if (filtered.length === 0) {
+          if (characters.length === 0) {
             resultBox.innerHTML = '<p>검색 결과 없음 😢</p>';
             return;
           }
 
-          filtered.forEach(char => {
+          characters.forEach(char => {
             const card = document.createElement('div');
             card.className = 'card';
             card.innerHTML = `
