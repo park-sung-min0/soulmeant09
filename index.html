@@ -76,23 +76,24 @@
           return axios.get(proxy + url)
             .then(res => {
               const chars = res.data.rows || [];
-              chars.forEach(c => c.serverId = server);
-              allCharacters.push(...chars);
+              chars.forEach(c => {
+                c.serverId = server;
+                if (c.characterName.includes(keyword)) {
+                  allCharacters.push(c);
+                }
+              });
             })
             .catch(() => {});
         })
       ).then(() => {
         resultBox.innerHTML = '';
-        const filtered = allCharacters.filter(char =>
-          char.characterName.startsWith(keyword)
-        );
 
-        if (filtered.length === 0) {
+        if (allCharacters.length === 0) {
           resultBox.innerHTML = '<p>검색 결과 없음 😢</p>';
           return;
         }
 
-        filtered.forEach(char => {
+        allCharacters.forEach(char => {
           const card = document.createElement('div');
           card.className = 'card';
           card.innerHTML = `
