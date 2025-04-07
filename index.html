@@ -14,9 +14,28 @@
     }
     .search-box {
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      align-items: center;
       margin-bottom: 20px;
       gap: 10px;
+    }
+    .select-box {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .select-box button {
+      width: 200px;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background-color: white;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+    .select-box button:hover {
+      background-color: #e0e0e0;
     }
     #result {
       display: flex;
@@ -49,10 +68,12 @@
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 <body>
-  <h1>던전앤파이터 캐릭터 검색</h1>
+  <h1>던전앤파이터 모험단 캐릭터 보기</h1>
   <div class="search-box">
-    <input type="text" id="characterName" placeholder="캐릭터 이름 입력" />
-    <button onclick="searchCharacters()">검색</button>
+    <div class="select-box">
+      <button onclick="searchByAdventure('Honkai')">Honkai 모험단</button>
+      <button onclick="searchByAdventure('스너글리')">스너글리 모험단</button>
+    </div>
   </div>
 
   <div id="result"></div>
@@ -60,63 +81,41 @@
   <script>
     const apiKey = 'nsYk6GNMxyk3pabxQFkFxQWYXM508xm6';
 
-    function searchCharacters() {
-      const inputName = document.getElementById('characterName').value.trim();
+    function searchByAdventure(adventureName) {
       const resultBox = document.getElementById('result');
-      resultBox.innerHTML = '<p>검색 중...</p>';
+      resultBox.innerHTML = '<p>모험단 정보 불러오는 중...</p>';
 
       const proxy = 'https://cors-anywhere.herokuapp.com/';
-      const servers = ['cain', 'prey', 'diregie'];
+      const server = 'cain'; // 두 모험단이 존재하는 서버로 고정
+      const url = `https://api.neople.co.kr/df/servers/${server}/adventurers/${encodeURIComponent(adventureName)}/characters?apikey=${apiKey}`;
 
-      let allCharacters = [];
+      axios.get(proxy + url)
+        .then(res => {
+          const characters = res.data.rows || [];
+          resultBox.innerHTML = '';
 
-      Promise.all(
-        servers.map(server => {
-          const url = `https://api.neople.co.kr/df/servers/${server}/characters?characterName=${encodeURIComponent(inputName)}&limit=100&apikey=${apiKey}`;
-          return axios.get(proxy + url)
-            .then(res => {
-              const chars = res.data.rows || [];
-              chars.forEach(c => {
-                c.serverId = server;
-                allCharacters.push(c);
-              });
-            })
-            .catch(() => {});
-        })
-      ).then(() => {
-        resultBox.innerHTML = '';
-
-        // 🔍 이름에 포함된 캐릭터 필터링
-        const filtered = allCharacters.filter(c => c.characterName.includes(inputName));
-
-        // 중복 제거 (characterId 기준)
-        const unique = [];
-        const seen = new Set();
-        for (const c of filtered) {
-          if (!seen.has(c.characterId)) {
-            seen.add(c.characterId);
-            unique.push(c);
+          if (characters.length === 0) {
+            resultBox.innerHTML = '<p>해당 모험단에 캐릭터가 없습니다 😢</p>';
+            return;
           }
-        }
 
-        if (unique.length === 0) {
-          resultBox.innerHTML = '<p>검색 결과 없음 😢</p>';
-          return;
-        }
-
-        unique.forEach(char => {
-          const card = document.createElement('div');
-          card.className = 'card';
-          card.innerHTML = `
-            <img src="https://img-api.neople.co.kr/df/servers/${char.serverId}/characters/${char.characterId}?zoom=1" 
-                 onerror="this.src='https://i.imgur.com/W7XnbRJ.png'" />
-            <h3>${char.characterName}</h3>
-            <div class="job">${char.jobGrowName} (${char.serverId})</div>
-          `;
-          card.onclick = () => loadDetail(char.serverId, char.characterId);
-          resultBox.appendChild(card);
+          characters.forEach(char => {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+              <img src="https://img-api.neople.co.kr/df/servers/${server}/characters/${char.characterId}?zoom=1" 
+                   onerror="this.src='https://i.imgur.com/W7XnbRJ.png'" />
+              <h3>${char.characterName}</h3>
+              <div class="job">${char.jobGrowName} (${server})</div>
+            `;
+            card.onclick = () => loadDetail(server, char.characterId);
+            resultBox.appendChild(card);
+          });
+        })
+        .catch(err => {
+          console.error(err);
+          resultBox.innerHTML = `<p style="color:red">API 호출 실패 😢</p><p>${err.message}</p>`;
         });
-      });
     }
 
     function loadDetail(server, characterId) {
